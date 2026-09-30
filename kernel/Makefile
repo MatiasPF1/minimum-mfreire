@@ -7,9 +7,14 @@ KERNEL := $(BUILD)/minimum-kernel.elf
 RUNTIME := $(BUILD)/libminemu_kernel.a
 
 CORE_OBJECT := $(BUILD)/core/main.o
+# Linked directly, not archived: the runtime archive's exception.o has weak
+# IRQ symbols that would stop the linker pulling overrides out of an archive.
 MODULE_OBJECTS := \
+	$(BUILD)/arch/irq.o \
+	$(BUILD)/core/irq.o \
 	$(BUILD)/drivers/uart.o \
-	$(BUILD)/lib/kprintf.o
+	$(BUILD)/lib/kprintf.o \
+	$(BUILD)/shell/msh.o
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
 	$(BUILD)/runtime/exception.o \
@@ -76,9 +81,17 @@ $(BUILD)/lib/%.o: src/lib/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
+$(BUILD)/shell/%.o: src/shell/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
 $(BUILD)/runtime/%.o: src/runtime/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/arch/%.o: src/arch/%.S
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(ASFLAGS) -c $< -o $@
 
 $(BUILD)/startup/%.o: src/startup/%.S
 	@mkdir -p $(dir $@)
