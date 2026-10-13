@@ -78,3 +78,37 @@ int uart_getc(void) {
 
     return byte;
 }
+
+void uart_write(volatile struct minemu_uart_regs *uart, const char *src, int n) {
+    for (int index = 0; index < n; ++index) {
+        while (!(uart->status & MINEMU_UART_STATUS_TX_READY)) {
+        }
+        uart->tx_data = (uint32_t)(uint8_t)src[index];
+    }
+}
+
+int uart_read(volatile struct minemu_uart_regs *uart, char *dst, int n) {
+    int count = 0;
+
+    if (uart != MINEMU_UART0) {
+        /* No RX interrupt or buffer here: take what the device holds. */
+        while (count < n && (uart->status & MINEMU_UART_STATUS_RX_READY)) {
+            dst[count++] = (char)(uart->rx_data & 0xff);
+        }
+        return count;
+    }
+
+    while (count < n && rx_tail != rx_head) {
+        uint16_t entry = rx_buffer[rx_tail];
+        if (entry == RX_OVERRUN_MARK) {
+            if (count != 0) {
+                break;
+            }
+            rx_tail = (rx_tail + 1) & RX_BUFFER_MASK;
+            return UART_OVERRUN;
+        }
+        dst[count++] = (char)entry;
+        rx_tail = (rx_tail + 1) & RX_BUFFER_MASK;
+    }
+    return count;
+}

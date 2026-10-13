@@ -11,7 +11,11 @@ CORE_OBJECT := $(BUILD)/core/main.o
 # IRQ symbols that would stop the linker pulling overrides out of an archive.
 MODULE_OBJECTS := \
 	$(BUILD)/arch/irq.o \
+	$(BUILD)/arch/svc.o \
+	$(BUILD)/arch/user.o \
 	$(BUILD)/core/irq.o \
+	$(BUILD)/core/loader.o \
+	$(BUILD)/core/syscall.o \
 	$(BUILD)/drivers/uart.o \
 	$(BUILD)/lib/kprintf.o \
 	$(BUILD)/shell/msh.o

@@ -1,11 +1,12 @@
+#include "core/loader.h"
 #include "drivers/uart.h"
 #include "minemu/boot.h"
 #include "minemu/irq.h"
 #include "minemu/trap.h"
 #include "minemu/trace.h"
-#include "shell/msh.h"
 
 void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
+    static const char module_name[] = "minimum-user";
     if ((uintptr_t)boot_info != MINEMU_BOOT_INFO_VADDR ||
         boot_info->magic != MINEMU_BOOT_INFO_MAGIC ||
         boot_info->version != MINEMU_ABI_VERSION ||
@@ -17,13 +18,16 @@ void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
         minemu_trace_event(UINT32_C(0xb007bad0));
         minemu_fail_stop();
     }
-    uart_puts("hello world\n");
-    minemu_trace_event(1);
 
     /* Device and controller first, CPU last: nothing may fire before the
      * handler and its buffer are ready. */
     uart_init();
     minemu_irq_enable();
 
-    msh_run();
+    uint32_t entry = user_load(boot_info, module_name, sizeof(module_name) - 1U);
+    if (entry == 0) {
+        minemu_trace_event(UINT32_C(0xb007bad1));
+        minemu_fail_stop();
+    }
+    minemu_enter_user(entry, USER_STACK_TOP);
 }
