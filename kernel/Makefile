@@ -17,8 +17,7 @@ MODULE_OBJECTS := \
 	$(BUILD)/core/loader.o \
 	$(BUILD)/core/syscall.o \
 	$(BUILD)/drivers/uart.o \
-	$(BUILD)/lib/kprintf.o \
-	$(BUILD)/shell/msh.o
+	$(BUILD)/lib/kprintf.o
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
 	$(BUILD)/runtime/exception.o \
@@ -82,10 +81,6 @@ $(BUILD)/drivers/%.o: src/drivers/%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/lib/%.o: src/lib/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-$(BUILD)/shell/%.o: src/shell/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 

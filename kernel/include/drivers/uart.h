@@ -3,9 +3,7 @@
 
 #include "minemu/platform.h"
 
-/* Returned by uart_getc when no byte is buffered. */
-#define UART_NO_DATA (-1)
-/* Returned by uart_getc, in stream order, where received bytes were dropped
+/* Returned by uart_read, in stream order, where received bytes were dropped
  * because the RX buffer was full. */
 #define UART_OVERRUN (-2)
 
@@ -15,10 +13,6 @@ void uart_init(void);
 
 void uart_putc(char c);
 void uart_puts(const char *s);
-
-/* Pop one received byte (0-255), UART_OVERRUN, or UART_NO_DATA. Never
- * blocks. Enables CPU IRQs on return, so call only after IRQs are enabled. */
-int uart_getc(void);
 
 /* Send n bytes to the given UART, waiting for TX ready before each one. */
 void uart_write(volatile struct minemu_uart_regs *uart, const char *src, int n);

@@ -1,12 +1,11 @@
 #include "core/irq.h"
 #include "drivers/uart.h"
-#include "minemu/irq.h"
 #include "minemu/platform.h"
 
 /*
- * RX ring buffer shared between the IRQ handler (producer) and uart_getc
- * (consumer). The handler runs with IRQs masked by the CPU; uart_getc masks
- * IRQs itself while it touches the buffer. Size is a power of two so the
+ * RX ring buffer shared between the IRQ handler (producer) and uart_read
+ * (consumer). The handler runs with IRQs masked by the CPU; uart_read is
+ * called from a syscall, where they are masked too. Size is a power of two so the
  * indices wrap with a mask instead of '%'. One slot stays empty to tell a
  * full buffer from an empty one, so it holds RX_BUFFER_SIZE - 1 entries.
  *
@@ -65,20 +64,6 @@ void uart_puts(const char *s) {
     }
 }
 
-int uart_getc(void) {
-    int byte = UART_NO_DATA;
-
-    minemu_irq_disable();
-    if (rx_tail != rx_head) {
-        uint16_t entry = rx_buffer[rx_tail];
-        rx_tail = (rx_tail + 1) & RX_BUFFER_MASK;
-        byte = entry == RX_OVERRUN_MARK ? UART_OVERRUN : (int)entry;
-    }
-    minemu_irq_enable();
-
-    return byte;
-}
-
 void uart_write(volatile struct minemu_uart_regs *uart, const char *src, int n) {
     for (int index = 0; index < n; ++index) {
         while (!(uart->status & MINEMU_UART_STATUS_TX_READY)) {
@@ -97,6 +82,10 @@ int uart_read(volatile struct minemu_uart_regs *uart, char *dst, int n) {
         }
         return count;
     }
+
+    /* IRQs are masked here, so bytes whose interrupt has not been taken yet
+     * are still in the device: move them into the buffer first. */
+    uart_rx_irq();
 
     while (count < n && rx_tail != rx_head) {
         uint16_t entry = rx_buffer[rx_tail];

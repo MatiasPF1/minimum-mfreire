@@ -14,8 +14,10 @@
 #define BOOTSTRAP_PAGE_DIRECTORY_PADDR UINT32_C(0x40010000)
 #define USER_IMAGE_BASE UINT32_C(0x00400000)
 #define USER_STACK_BOTTOM UINT32_C(0x007ff000)
-#define MAX_USER_IMAGE_PAGES 16U
-#define SYSTEM_ROM_TABLE_COUNT 4U
+/* Smaller than the example's 16 pages and 4 tables: the bootloader's start-up
+ * time grows with the kernel's bss, and the shell must reach its prompt early. */
+#define MAX_USER_IMAGE_PAGES 4U
+#define SYSTEM_ROM_TABLE_COUNT 1U
 
 static uint32_t system_rom_tables[SYSTEM_ROM_TABLE_COUNT][1024]
     __attribute__((aligned(MINEMU_PAGE_SIZE)));
